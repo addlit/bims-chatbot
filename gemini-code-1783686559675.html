@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIMS Hospital Widget Test</title>
+    <style>
+        /* Floating Chat Button */
+        .chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        /* Chat Window Container */
+        .chat-box {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 450px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.2);
+            flex-direction: column;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+
+        /* Header Style */
+        .chat-header {
+            background-color: #0056b3;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Message Log Area */
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            max-width: 75%;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .bot-msg {
+            background-color: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+        }
+
+        .user-msg {
+            background-color: #0056b3;
+            color: white;
+            margin-left: auto;
+        }
+
+        /* Input Panel */
+        .chat-input-area {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            background-color: white;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 10px 15px;
+            outline: none;
+        }
+
+        .chat-input-area button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            margin-left: 8px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Chat Trigger Button -->
+    <button class="chat-btn" onclick="toggleChat()">💬</button>
+
+    <!-- Chat Box -->
+    <div class="chat-box" id="chatBox">
+        <div class="chat-header">
+            <span>BIMS Care Assistant</span>
+            <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+        </div>
+        <div class="chat-messages" id="chatMessages" style="display: flex; flex-direction: column;">
+            <div class="message bot-msg">Hello! Welcome to BIMS Hospital. How can I help you today?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Ask about appointments, location..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Toggle Open/Close Window
+        function toggleChat() {
+            const chatBox = document.getElementById("chatBox");
+            chatBox.style.display = chatBox.style.display === "flex" ? "none" : "flex";
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") sendMessage();
+        }
+
+        // Send Message to Backend
+        async function sendMessage() {
+            const inputField = document.getElementById("userInput");
+            const userText = inputField.value.trim();
+            if (!userText) return;
+
+            const chatMessages = document.getElementById("chatMessages");
+
+            // 1. Append User Message
+            const userDiv = document.createElement("div");
+            userDiv.className = "message user-msg";
+            userDiv.innerText = userText;
+            chatMessages.appendChild(userDiv);
+            inputField.value = "";
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                // 2. Call your standalone Backend API 
+                // (Replace localhost with your actual deployed server domain)
+                const response = await fetch('http://127.0.0.1:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userText })
+                });
+                const data = await response.json();
+
+                // 3. Append Bot Message
+                const botDiv = document.createElement("div");
+                botDiv.className = "message bot-msg";
+                botDiv.innerText = data.response;
+                chatMessages.appendChild(botDiv);
+            } catch (error) {
+                const errorDiv = document.createElement("div");
+                errorDiv.className = "message bot-msg";
+                errorDiv.innerText = "Sorry, I am having trouble connecting to the hospital desk right now.";
+                chatMessages.appendChild(errorDiv);
+            }
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>
